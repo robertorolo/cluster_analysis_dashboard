@@ -158,7 +158,7 @@ State('method','value'),
 State('method_params', 'children')]
 )
 def run(n_clicks, cols, method, actual_children):
-    schildren = [html.H1('Scores')]
+    schildren = [html.H2('Scores')]
     if n_clicks != 0:
         print('Calculating...')
         
