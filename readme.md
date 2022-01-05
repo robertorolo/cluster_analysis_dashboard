@@ -10,4 +10,4 @@
 
 ## Screenshot
 
-![ss]("assets/ss.jpeg")
+![screenshot]("assets/ss.jpeg")
