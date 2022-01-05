@@ -9,12 +9,16 @@ import pandas as pd
 
 import base64
 import io
-import webbrowser
 
 from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.mixture import GaussianMixture
+
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import calinski_harabasz_score
 from sklearn.metrics import davies_bouldin_score
+
+from sklearn.preprocessing import MinMaxScaler
 
 #----
 #defining helper functions
@@ -27,9 +31,6 @@ def parse_contents(contents, filename, date):
     df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), na_values=nanvalue, sep=',', low_memory=False)
 
     return df
-
-def open_browser():
-	webbrowser.open_new("http://localhost:{}".format(port))
 #----
 
 #----
@@ -70,6 +71,7 @@ app.layout = html.Div([
         html.H2("Select clustering method"),
         dcc.Dropdown(id='method', options=[
             {'label': 'Kmeans', 'value': 'Kmeans'},
+            {'label': 'Hierarchical', 'value': 'Hierarchical'},
             {'label': 'GMM', 'value': 'GMM'},])
         ]),
 
@@ -146,7 +148,19 @@ def method_params(mval, actual_children):
     if mval == "Kmeans":
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
         return parameters
+    elif mval == "Hierarchical":
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Dist. treshold', style={'height':'30px'}))
+        return parameters
     elif mval == "GMM":
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Dropdown(id='cov_type', options=[
+            {'label': 'full', 'value': 'full'},
+            {'label': 'tied', 'value': 'tied'},
+            {'label': 'diag', 'value': 'diag'},
+            {'label': 'spherical', 'value': 'spherical'}],
+            placeholder="Covariance type"
+        ))
         return parameters
     else:
         return parameters
@@ -172,12 +186,33 @@ def run(n_clicks, cols, method, actual_children):
         dfna = df[cols].dropna()
         X = dfna[cols[:-3]].values
 
+        #scaling data
+        scaler = MinMaxScaler()
+        X = scaler.fit_transform(X)
+
         #here you will get params and run clustering algorithms
         if method == 'Kmeans':
             nclus = actual_children[1]['props']['value']
             kmeans = KMeans(n_clusters=nclus).fit(X)
             labels = kmeans.labels_
             
+            dfna['labels'] = [str(j) for j in labels]
+        elif method == 'Hierarchical':
+            nclus = actual_children[1]['props']['value']
+            dist_tresh = actual_children[2]['props']['value']
+            if nclus is None:
+               clustering = AgglomerativeClustering(distance_threshold=dist_tresh).fit(X)
+            else:
+                clustering = AgglomerativeClustering(n_clusters=nclus).fit(X)
+            labels = clustering.labels_
+
+            dfna['labels'] = [str(j) for j in labels]
+        elif method == 'GMM':
+            nclus = actual_children[1]['props']['value']
+            cov_type = nclus = actual_children[2]['props']['value']
+            gmm = GaussianMixture(n_components=nclus, covariance_type=cov_type)
+            labels = gmm.predict(X)
+
             dfna['labels'] = [str(j) for j in labels]
         else:
             labels = ['0' for j in range(len(dfna))]
@@ -246,12 +281,10 @@ Input('export', 'n_clicks')
 )
 def export(n_clicks):
     if n_clicks != 0:
-        
         return dcc.send_data_frame(dfna.to_csv, 'exported_file.csv')
 
 #----
 
 #----
 if __name__ == '__main__':
-    webbrowser.open_new('http://127.0.0.1:2000/')
-    app.run_server(debug=True, port=2000)
+    app.run_server(debug=True)
