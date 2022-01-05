@@ -11,6 +11,9 @@ import base64
 import io
 
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.metrics import calinski_harabasz_score
+from sklearn.metrics import davies_bouldin_score
 
 #----
 #defining helper functions
@@ -34,7 +37,9 @@ nanvalue = -99
 #----
 
 #starting the app
-app = dash.Dash(__name__)
+app = dash.Dash(
+__name__, 
+)
 app.config.suppress_callback_exceptions=True
 
 #defining the app layout
@@ -51,12 +56,14 @@ app.layout = html.Div([
 
         #file
         html.Div([
+        html.H2("File"),
         dcc.Upload(id='upload_data', children=[html.Button('Upload File')]),
         dcc.Checklist(id='column_names', options=[], labelStyle={'display': 'block'})
         ]),
 
         #method
         html.Div([
+        html.H2("Select clustering method"),
         dcc.Dropdown(id='method', options=[
             {'label': 'Kmeans', 'value': 'Kmeans'},
             {'label': 'GMM', 'value': 'GMM'},])
@@ -64,9 +71,20 @@ app.layout = html.Div([
 
         #method params
         html.Div(id='method_params', children=[]),
+        html.Br(),
 
         #run button
-        html.Button('Run', id='runbtn', n_clicks=0)
+        html.Button('Run', id='runbtn', n_clicks=0),
+
+        #scores
+        html.Div(id='scores', children=[]),
+        html.Br(),
+
+        #export btn
+        html.Div([
+        html.Button('Export csv', id='export', n_clicks=0),
+        dcc.Download(id='download_df')
+        ])
 
     ], style={'width': '20%', 'display': 'inline-block', 'vertical-align': 'top'}),
 
@@ -75,7 +93,10 @@ app.layout = html.Div([
 
         #3d viwer
         html.Div([
-        dcc.Graph(id='viwer', figure={})
+        dcc.Graph(id='viwer', figure={}),
+        
+        #proportions plot
+        dcc.Graph(id='proportions', figure={})
         ]),
 
     ], style={'width': '80%', 'display': 'inline-block', 'vertical-align': 'top'})
@@ -115,39 +136,56 @@ Input('method', 'value'),
 State('method_params', 'children'),
 )
 def method_params(mval, actual_children):
-    if mval == "Kmeans":
-        parameters = [
-            dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters')
+    parameters = [
+            html.H3('Parameters'),
         ]
+    if mval == "Kmeans":
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
         return parameters
     elif mval == "GMM":
-        return []
+        return parameters
     else:
-        return []
+        return parameters
 
 #run
 @app.callback(
-Output('viwer', 'figure'),
-Input('runbtn', 'n_clicks'),
+[Output('viwer', 'figure'), 
+Output('proportions', 'figure'),
+Output('scores', 'children')],
+[Input('runbtn', 'n_clicks'),
 State('column_names', 'value'),
-State('method_params', 'children')
+State('method','value'),
+State('method_params', 'children')]
 )
-def run(n_clicks, cols, actual_children):
+def run(n_clicks, cols, method, actual_children):
+    schildren = [html.H1('Scores')]
     if n_clicks != 0:
         print('Calculating...')
-        nclus = actual_children[0]['props']['value']
         
-        #runnign kmeans
+        #preparing data
         cols = cols + [x, y, z]
         dfna = df[cols].dropna()
         X = dfna[cols[:-3]].values
-        kmeans = KMeans(n_clusters=nclus).fit(X)
-        labels = kmeans.labels_
-        dfna['labels'] = [str(j) for j in labels]
+
+        #here you will get params and run clustering algorithms
+        if method == 'Kmeans':
+            nclus = actual_children[1]['props']['value']
+            kmeans = KMeans(n_clusters=nclus).fit(X)
+            labels = kmeans.labels_
+            
+            dfna['labels'] = [str(j) for j in labels]
+        else:
+            dfna['labels'] = ['0' for j in range(len(dfna))]
+            sc, chs, dbs = 0, 0, 0
+
+        #scores
+        sc = silhouette_score(X, labels, metric='euclidean').round(2)
+        chs = calinski_harabasz_score(X, labels).round(2)
+        dbs = davies_bouldin_score(X, labels).round(2)
 
         #plotting the 3d scatter
         layout = {
-        'height':900,
+        'height':750,
         'title':'Clusters 3d map',
         }
         scene = dict(
@@ -158,17 +196,52 @@ def run(n_clicks, cols, actual_children):
         data = []
         for i in dfna['labels'].unique():
             f = dfna['labels'] == i
+            
+            global dfnaf
             dfnaf = dfna[f]
             dfnaf = dfnaf.loc[:,~dfnaf.columns.duplicated()]
-            t = go.Scatter3d(x=dfnaf[x], y=dfnaf[y], z=dfnaf[z], mode='markers', marker=dict(size=5), name=i) 
+            t = go.Scatter3d(x=dfnaf[x], y=dfnaf[y], z=dfnaf[z], mode='markers', marker=dict(size=2), name=i) 
             data.append(t)
       
         fig = go.Figure(data = data, layout = layout)
         fig.layout.scene = scene  
 
-        return fig
+        #ploting poportions
+        layout = {
+        'height':400,
+        'title':'Labels proportions',
+        }
+        
+        l = dfna['labels'].unique()
+        h = [len(dfna[dfna['labels'] == i]) for i in l]
+
+        fig1 = go.Figure(data = [go.Bar(x=l, y=h, text=h)], layout = layout)
+
+        #updating scores
+        tbl = html.Table(
+        #header
+        [html.Tr([html.Th('Metric'), html.Th('Score')])] +
+        #body
+        [html.Tr([html.Td(['Silhouete']), html.Td([str(sc)])])] +
+        [html.Tr([html.Td(['Calinski Harabaz']), html.Td([str(chs)])])] +
+        [html.Tr([html.Td(['Davies Bouldin']), html.Td([str(dbs)])])]
+        )
+        
+        schildren.append(tbl)
+            
+        return fig, fig1, schildren
     else:
-        return {}
+        return {}, {}, schildren
+
+#exporting
+@app.callback(
+Output('download_df', 'data'),
+Input('export', 'n_clicks')
+)
+def export(n_clicks):
+    if n_clicks != 0:
+        return dcc.send_data_frame(dfnaf.to_csv, 'exported_file.csv')
+
 #----
 
 #----
