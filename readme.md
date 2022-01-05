@@ -10,4 +10,4 @@
 
 ## Screenshot
 
-![ss]("assets/ss.jpeg")
+![ss]("https://github.com/robertorolo/cluster_analysis_dashboard/blob/main/assets/ss.jpeg?raw=true")
