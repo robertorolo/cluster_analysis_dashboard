@@ -164,6 +164,7 @@ def run(n_clicks, cols, method, actual_children):
         
         #preparing data
         cols = cols + [x, y, z]
+        global dfna
         dfna = df[cols].dropna()
         X = dfna[cols[:-3]].values
 
@@ -175,7 +176,8 @@ def run(n_clicks, cols, method, actual_children):
             
             dfna['labels'] = [str(j) for j in labels]
         else:
-            dfna['labels'] = ['0' for j in range(len(dfna))]
+            labels = ['0' for j in range(len(dfna))]
+            dfna['labels'] = labels
             sc, chs, dbs = 0, 0, 0
 
         #scores
@@ -193,13 +195,13 @@ def run(n_clicks, cols, method, actual_children):
         aspectratio=dict(x=1, y=1, z=1)
         )
 
+        dfna = dfna.loc[:,~dfna.columns.duplicated()]
+
         data = []
         for i in dfna['labels'].unique():
             f = dfna['labels'] == i
             
-            global dfnaf
             dfnaf = dfna[f]
-            dfnaf = dfnaf.loc[:,~dfnaf.columns.duplicated()]
             t = go.Scatter3d(x=dfnaf[x], y=dfnaf[y], z=dfnaf[z], mode='markers', marker=dict(size=2), name=i) 
             data.append(t)
       
@@ -240,7 +242,8 @@ Input('export', 'n_clicks')
 )
 def export(n_clicks):
     if n_clicks != 0:
-        return dcc.send_data_frame(dfnaf.to_csv, 'exported_file.csv')
+        
+        return dcc.send_data_frame(dfna.to_csv, 'exported_file.csv')
 
 #----
 
