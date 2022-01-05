@@ -1,9 +1,13 @@
 # Cluster analysis dashboard
 
-Dependencies:
+## Dependencies:
 
 `pip install dash pandas`
 
-Execution:
+## Execution:
 
 `python cluster_analysis_dashboard.py`
+
+## Screenshot
+
+![ss]('assests/ss.jpeg')
