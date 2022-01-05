@@ -211,7 +211,7 @@ def run(n_clicks, cols, method, actual_children):
                 clustering = AgglomerativeClustering(n_clusters=nclus).fit(X)
             else:
                 dist_tresh = actual_children[3]['props']['value']
-                clustering = AgglomerativeClustering(distance_threshold=dist_tresh).fit(X)
+                clustering = AgglomerativeClustering(n_clusters=None, distance_threshold=dist_tresh).fit(X)
             labels = clustering.labels_
 
             dfna['labels'] = [str(j) for j in labels]

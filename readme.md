@@ -10,4 +10,4 @@
 
 ## Screenshot
 
-![screenshot](assets/ss.jpeg)
+![screenshot](assets/ss.png)
