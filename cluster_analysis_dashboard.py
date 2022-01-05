@@ -9,6 +9,7 @@ import pandas as pd
 
 import base64
 import io
+import webbrowser
 
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
@@ -26,6 +27,9 @@ def parse_contents(contents, filename, date):
     df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), na_values=nanvalue, sep=',', low_memory=False)
 
     return df
+
+def open_browser():
+	webbrowser.open_new("http://localhost:{}".format(port))
 #----
 
 #----
@@ -249,4 +253,5 @@ def export(n_clicks):
 
 #----
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    webbrowser.open_new('http://127.0.0.1:2000/')
+    app.run_server(debug=True, port=2000)
