@@ -150,6 +150,7 @@ def method_params(mval, actual_children):
         return parameters
     elif mval == "Hierarchical":
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(html.P('or'))
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Dist. treshold', style={'height':'30px'}))
         return parameters
     elif mval == "GMM":
@@ -198,6 +199,7 @@ def run(n_clicks, cols, method, actual_children):
             
             dfna['labels'] = [str(j) for j in labels]
         elif method == 'Hierarchical':
+            print(actual_children)
             nclus = actual_children[1]['props']['value']
             dist_tresh = actual_children[2]['props']['value']
             if nclus is None:
