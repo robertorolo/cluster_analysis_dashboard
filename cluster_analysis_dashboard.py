@@ -142,17 +142,20 @@ Input('method', 'value'),
 State('method_params', 'children'),
 )
 def method_params(mval, actual_children):
+    #puts the necessary parameter for each method in the layout
     parameters = [
             html.H3('Parameters'),
         ]
     if mval == "Kmeans":
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
         return parameters
+    
     elif mval == "Hierarchical":
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
         parameters.append(html.P('or'))
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Dist. treshold', style={'height':'30px'}))
         return parameters
+    
     elif mval == "GMM":
         parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
         parameters.append(dcc.Dropdown(id='cov_type', options=[
@@ -163,6 +166,7 @@ def method_params(mval, actual_children):
             placeholder="Covariance type"
         ))
         return parameters
+    
     else:
         return parameters
 
@@ -198,6 +202,7 @@ def run(n_clicks, cols, method, actual_children):
             labels = kmeans.labels_
             
             dfna['labels'] = [str(j) for j in labels]
+        
         elif method == 'Hierarchical':
             nclus = actual_children[1]['props']
             dist_tresh = actual_children[3]['props']
@@ -210,13 +215,16 @@ def run(n_clicks, cols, method, actual_children):
             labels = clustering.labels_
 
             dfna['labels'] = [str(j) for j in labels]
+        
         elif method == 'GMM':
             nclus = actual_children[1]['props']['value']
-            cov_type = nclus = actual_children[2]['props']['value']
+            cov_type = actual_children[2]['props']['value']
             gmm = GaussianMixture(n_components=nclus, covariance_type=cov_type)
+            gmm.fit(X)
             labels = gmm.predict(X)
 
             dfna['labels'] = [str(j) for j in labels]
+
         else:
             labels = ['0' for j in range(len(dfna))]
             dfna['labels'] = labels
