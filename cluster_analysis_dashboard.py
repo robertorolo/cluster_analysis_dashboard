@@ -199,13 +199,14 @@ def run(n_clicks, cols, method, actual_children):
             
             dfna['labels'] = [str(j) for j in labels]
         elif method == 'Hierarchical':
-            print(actual_children)
-            nclus = actual_children[1]['props']['value']
-            dist_tresh = actual_children[2]['props']['value']
-            if nclus is None:
-               clustering = AgglomerativeClustering(distance_threshold=dist_tresh).fit(X)
-            else:
+            nclus = actual_children[1]['props']
+            dist_tresh = actual_children[3]['props']
+            if 'value' in nclus:
+                nclus = actual_children[1]['props']['value']
                 clustering = AgglomerativeClustering(n_clusters=nclus).fit(X)
+            else:
+                dist_tresh = actual_children[3]['props']['value']
+                clustering = AgglomerativeClustering(distance_threshold=dist_tresh).fit(X)
             labels = clustering.labels_
 
             dfna['labels'] = [str(j) for j in labels]
