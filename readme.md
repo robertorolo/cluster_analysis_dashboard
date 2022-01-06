@@ -2,7 +2,7 @@
 
 ## Dependencies:
 
-`pip install dash pandas`
+`pip install dash pandas sklearn`
 
 ## Execution:
 
