@@ -13,6 +13,7 @@ import io
 from sklearn.cluster import KMeans
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.mixture import GaussianMixture
+import spatialcluster as sp
 
 from sklearn.metrics import silhouette_score
 from sklearn.metrics import calinski_harabasz_score
@@ -23,7 +24,7 @@ from sklearn.preprocessing import MinMaxScaler
 #----
 #defining helper functions
 def parse_contents(contents, filename, date):
-    #read upload content to a dataframe    
+    #read upload content to a dataframe
     
     content_type, content_string = contents.split(',')
     decoded = base64.b64decode(content_string)
@@ -72,7 +73,9 @@ app.layout = html.Div([
         dcc.Dropdown(id='method', options=[
             {'label': 'Kmeans', 'value': 'Kmeans'},
             {'label': 'Hierarchical', 'value': 'Hierarchical'},
-            {'label': 'GMM', 'value': 'GMM'},])
+            {'label': 'GMM', 'value': 'GMM'},
+            {'label': 'ACCluster', 'value': 'ACCluster'},
+            {'label': 'DSSEnsemble', 'value': 'DSSEnsemble'}])
         ]),
 
         #method params
@@ -166,6 +169,66 @@ def method_params(mval, actual_children):
             placeholder="Covariance type"
         ))
         return parameters
+
+    elif mval == "ACCluster":
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Dropdown(id='acmetric', options=[
+            {'label': 'morans', 'value': 'morans'},
+            {'label': 'getis', 'value': 'getis'}],
+            placeholder="Autocorrelation metrics"
+        ))
+        parameters.append(dcc.Dropdown(id='cluster_method', options=[
+            {'label': 'kmeans', 'value': 'kmeans'},
+            {'label': 'hier', 'value': 'hier'},
+            {'label': 'gmm', 'value': 'gmm'},],
+            placeholder="Cluster method"
+        ))
+        
+        parameters.append(html.P('Search parameters'))
+        parameters.append(dcc.Input(id='nnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px'}))
+        parameters.append(html.Div([
+            dcc.Input(id='ang1', type='number', placeholder='ang 1', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='ang2', type='number', placeholder='ang 2', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='ang3', type='number', placeholder='ang 3', style={'height':'30px', 'width':'60px'})
+        ]))
+
+        parameters.append(html.Div([
+            dcc.Input(id='r1', type='number', placeholder='range 1', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='r1', type='number', placeholder='range 2', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='r1', type='number', placeholder='range 3', style={'height':'30px', 'width':'60px'})
+        ]))
+        
+        return parameters
+
+    elif mval == "DSSEnsemble":
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Dropdown(id='cluster_method', options=[
+            {'label': 'kmeans', 'value': 'kmeans'},
+            {'label': 'hier', 'value': 'hier'},
+            {'label': 'gmm', 'value': 'gmm'},],
+            placeholder="Cluster method"
+        ))
+
+        parameters.append(html.P('Search parameters'))
+        parameters.append(dcc.Input(id='nnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='ntaken', type='number', placeholder='Numb. of nn taken', style={'height':'30px'}))
+        
+        parameters.append(html.Div([
+            dcc.Input(id='ang1', type='number', placeholder='ang 1', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='ang2', type='number', placeholder='ang 2', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='ang3', type='number', placeholder='ang 3', style={'height':'30px', 'width':'60px'})
+        ]))
+
+        parameters.append(html.Div([
+            dcc.Input(id='r1', type='number', placeholder='range 1', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='r1', type='number', placeholder='range 2', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='r1', type='number', placeholder='range 3', style={'height':'30px', 'width':'60px'})
+        ]))
+
+        parameters.append(html.P('Ensemble parameters'))
+        parameters.append(dcc.Input(id='nreals', type='number', placeholder='Numb. of realizations', style={'height':'30px'}))
+
+        return parameters
     
     else:
         return parameters
@@ -194,6 +257,9 @@ def run(n_clicks, cols, method, actual_children):
         #scaling data
         scaler = MinMaxScaler()
         X = scaler.fit_transform(X)
+
+        #getting coordinates
+        locations = dfna[[x, y, z]] 
 
         #here you will get params and run clustering algorithms
         if method == 'Kmeans':
@@ -225,6 +291,48 @@ def run(n_clicks, cols, method, actual_children):
 
             dfna['labels'] = [str(j) for j in labels]
 
+        elif method == "ACCluster":
+            nclus = actual_children[1]['props']['value']
+            acmetric = actual_children[2]['props']['value']
+            cluster_method = actual_children[3]['props']['value']
+            nn = actual_children[5]['props']['value']
+
+            ang1 = actual_children[6]['props']['children'][0]['props']['value']
+            ang2 = actual_children[6]['props']['children'][1]['props']['value']
+            ang3 = actual_children[6]['props']['children'][2]['props']['value']
+
+            r1 = actual_children[7]['props']['children'][0]['props']['value']
+            r2 = actual_children[7]['props']['children'][1]['props']['value']
+            r3 = actual_children[7]['props']['children'][2]['props']['value']
+
+            accl = sp.ACCluster(X, locations, nclus=nclus, acmetric=acmetric, cluster_method=cluster_method, nnears=nn, searchparams=(ang1, ang2, ang3, r1, r2, r3))
+            accl.fit(nclus) 
+            labels = accl.predict()
+
+            dfna['labels'] = [str(j) for j in labels]
+
+        elif method == "DSSEnsemble":
+            nclus = actual_children[1]['props']['value']
+            method = actual_children[2]['props']['value']
+            nn = actual_children[4]['props']['value']
+            nnt = actual_children[5]['props']['value']
+
+            ang1 = actual_children[6]['props']['children'][0]['props']['value']
+            ang2 = actual_children[6]['props']['children'][1]['props']['value']
+            ang3 = actual_children[6]['props']['children'][2]['props']['value']
+
+            r1 = actual_children[7]['props']['children'][0]['props']['value']
+            r2 = actual_children[7]['props']['children'][1]['props']['value']
+            r3 = actual_children[7]['props']['children'][2]['props']['value']
+
+            nreal = actual_children[9]['props']['value']
+            
+            dss = sp.DSSEnsemble(X, locations, nreal=nreal, nnears=nn, numtake=nnt, searchparams=(ang1, ang2, ang3, r1, r2, r3))
+            dss.fit(target_nclus=nclus)
+            labels = dss.predict(nclus=nclus, method=method)
+
+            dfna['labels'] = [str(j) for j in labels]
+
         else:
             labels = ['0' for j in range(len(dfna))]
             dfna['labels'] = labels
@@ -234,6 +342,7 @@ def run(n_clicks, cols, method, actual_children):
         sc = silhouette_score(X, labels, metric='euclidean').round(2)
         chs = calinski_harabasz_score(X, labels).round(2)
         dbs = davies_bouldin_score(X, labels).round(2)
+
 
         #plotting the 3d scatter
         layout = {
