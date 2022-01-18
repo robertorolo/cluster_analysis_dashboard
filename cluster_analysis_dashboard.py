@@ -87,6 +87,20 @@ app.layout = html.Div([
 
         #scores
         html.Div(id='scores', children=[]),
+        html.Div(id='scores_params', children=[
+            html.P('Search parameters (optional)'),
+            dcc.Input(id='snnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px'}),
+            html.Div([
+            dcc.Input(id='sang1', type='number', placeholder='ang 1', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='sang2', type='number', placeholder='ang 2', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='sang3', type='number', placeholder='ang 3', style={'height':'30px', 'width':'60px'})
+            ]),
+            html.Div([
+            dcc.Input(id='sr1', type='number', placeholder='range 1', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='sr2', type='number', placeholder='range 2', style={'height':'30px', 'width':'60px'}),
+            dcc.Input(id='sr3', type='number', placeholder='range 3', style={'height':'30px', 'width':'60px'})
+            ])
+        ]),
         html.Br(),
 
         #export btn
@@ -241,10 +255,12 @@ Output('scores', 'children')],
 [Input('runbtn', 'n_clicks'),
 State('column_names', 'value'),
 State('method','value'),
-State('method_params', 'children')]
+State('method_params', 'children'),
+State('scores_params', 'children')]
 )
-def run(n_clicks, cols, method, actual_children):
+def run(n_clicks, cols, method, actual_children, sparchildren):
     schildren = [html.H2('Scores')]
+    
     if n_clicks != 0:
         print('Calculating...')
         
@@ -336,13 +352,24 @@ def run(n_clicks, cols, method, actual_children):
         else:
             labels = ['0' for j in range(len(dfna))]
             dfna['labels'] = labels
-            sc, chs, dbs = 0, 0, 0
+            sc, chs, dbs, hs, wcss = 0, 0, 0, 0, 0
 
         #scores
         sc = silhouette_score(X, labels, metric='euclidean').round(2)
         chs = calinski_harabasz_score(X, labels).round(2)
         dbs = davies_bouldin_score(X, labels).round(2)
-
+        if 'value' in sparchildren[1]['props']:
+            nn = sparchildren[1]['props']['value']
+            ang1 = sparchildren[2]['props']['children'][0]['props']['value']
+            ang2 = sparchildren[2]['props']['children'][1]['props']['value']
+            ang3 = sparchildren[2]['props']['children'][2]['props']['value']
+            r1 = sparchildren[3]['props']['children'][0]['props']['value']
+            r2 = sparchildren[3]['props']['children'][1]['props']['value']
+            r3 = sparchildren[3]['props']['children'][2]['props']['value']
+            cm = sp.cluster_metrics_single(X, locations, labels, nnears=nn, searchparams=(ang1,ang2,ang3,r1,r2,r3))
+            hs, wcss = round(cm[0], 2), round(cm[1], 2)
+        else:
+            hs, wcss = 0, 0
 
         #plotting the 3d scatter
         layout = {
@@ -385,10 +412,13 @@ def run(n_clicks, cols, method, actual_children):
         #body
         [html.Tr([html.Td(['Silhouete']), html.Td([str(sc)])])] +
         [html.Tr([html.Td(['Calinski Harabaz']), html.Td([str(chs)])])] +
-        [html.Tr([html.Td(['Davies Bouldin']), html.Td([str(dbs)])])]
+        [html.Tr([html.Td(['Davies Bouldin']), html.Td([str(dbs)])])] +
+        [html.Tr([html.Td(['Spatial entropy']), html.Td([str(hs)])])] +
+        [html.Tr([html.Td(['WCSS']), html.Td([str(wcss)])])]
         )
         
         schildren.append(tbl)
+        print('Finished!')
             
         return fig, fig1, schildren
     else:
