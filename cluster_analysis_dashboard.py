@@ -75,8 +75,8 @@ app.layout = html.Div([
             {'label': 'Hierarchical', 'value': 'Hierarchical'},
             {'label': 'GMM', 'value': 'GMM'},
             {'label': 'ACCluster', 'value': 'ACCluster'},
-            {'label': 'DSSEnsemble', 'value': 'DSSEnsemble'}])
-        ]),
+            {'label': 'DSSEnsemble', 'value': 'DSSEnsemble'}], style={'height':'30px', 'width':'196px'})
+        ],),
 
         #method params
         html.Div(id='method_params', children=[]),
@@ -89,7 +89,7 @@ app.layout = html.Div([
         html.Div(id='scores', children=[]),
         html.Div(id='scores_params', children=[
             html.P('Search parameters (optional)'),
-            dcc.Input(id='snnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px'}),
+            dcc.Input(id='snnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px', 'width':'196px'}),
             html.Div([
             dcc.Input(id='sang1', type='number', placeholder='ang 1', style={'height':'30px', 'width':'60px'}),
             dcc.Input(id='sang2', type='number', placeholder='ang 2', style={'height':'30px', 'width':'60px'}),
@@ -164,42 +164,44 @@ def method_params(mval, actual_children):
             html.H3('Parameters'),
         ]
     if mval == "Kmeans":
-        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px', 'width':'196px'}))
         return parameters
     
     elif mval == "Hierarchical":
-        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px', 'width':'196px'}))
         parameters.append(html.P('or'))
-        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Dist. treshold', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Dist. treshold', style={'height':'30px', 'width':'196px'}))
         return parameters
     
     elif mval == "GMM":
-        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px', 'width':'196px'}))
+
         parameters.append(dcc.Dropdown(id='cov_type', options=[
             {'label': 'full', 'value': 'full'},
             {'label': 'tied', 'value': 'tied'},
             {'label': 'diag', 'value': 'diag'},
             {'label': 'spherical', 'value': 'spherical'}],
-            placeholder="Covariance type"
+            placeholder="Covariance type", style={'height':'30px', 'width':'196px'}
         ))
         return parameters
 
     elif mval == "ACCluster":
-        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px', 'width':'196px'}))
         parameters.append(dcc.Dropdown(id='acmetric', options=[
             {'label': 'morans', 'value': 'morans'},
             {'label': 'getis', 'value': 'getis'}],
-            placeholder="Autocorrelation metrics"
+            placeholder="Autocorrelation metrics", style={'height':'30px', 'width':'196px'}
         ))
+        parameters.append(html.Br())
         parameters.append(dcc.Dropdown(id='cluster_method', options=[
             {'label': 'kmeans', 'value': 'kmeans'},
             {'label': 'hier', 'value': 'hier'},
             {'label': 'gmm', 'value': 'gmm'},],
-            placeholder="Cluster method"
+            placeholder="Cluster method", style={'height':'30px', 'width':'196px'}
         ))
         
         parameters.append(html.P('Search parameters'))
-        parameters.append(dcc.Input(id='nnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px', 'width':'196px'}))
         parameters.append(html.Div([
             dcc.Input(id='ang1', type='number', placeholder='ang 1', style={'height':'30px', 'width':'60px'}),
             dcc.Input(id='ang2', type='number', placeholder='ang 2', style={'height':'30px', 'width':'60px'}),
@@ -215,17 +217,18 @@ def method_params(mval, actual_children):
         return parameters
 
     elif mval == "DSSEnsemble":
-        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nclus', type='number', placeholder='Numb. of clusters', style={'height':'30px', 'width':'196px'}))
+
         parameters.append(dcc.Dropdown(id='cluster_method', options=[
             {'label': 'kmeans', 'value': 'kmeans'},
             {'label': 'hier', 'value': 'hier'},
             {'label': 'gmm', 'value': 'gmm'},],
-            placeholder="Cluster method"
+            placeholder="Cluster method", style={'height':'30px', 'width':'196px'}
         ))
 
         parameters.append(html.P('Search parameters'))
-        parameters.append(dcc.Input(id='nnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px'}))
-        parameters.append(dcc.Input(id='ntaken', type='number', placeholder='Numb. of nn taken', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nnears', type='number', placeholder='Numb. of nearest neighbors', style={'height':'30px', 'width':'196px'}))
+        parameters.append(dcc.Input(id='ntaken', type='number', placeholder='Numb. of nn taken', style={'height':'30px', 'width':'196px'}))
         
         parameters.append(html.Div([
             dcc.Input(id='ang1', type='number', placeholder='ang 1', style={'height':'30px', 'width':'60px'}),
@@ -240,7 +243,7 @@ def method_params(mval, actual_children):
         ]))
 
         parameters.append(html.P('Ensemble parameters'))
-        parameters.append(dcc.Input(id='nreals', type='number', placeholder='Numb. of realizations', style={'height':'30px'}))
+        parameters.append(dcc.Input(id='nreals', type='number', placeholder='Numb. of realizations', style={'height':'30px', 'width':'196px'}))
 
         return parameters
     
