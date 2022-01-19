@@ -313,16 +313,16 @@ def run(n_clicks, cols, method, actual_children, sparchildren):
         elif method == "ACCluster":
             nclus = actual_children[1]['props']['value']
             acmetric = actual_children[2]['props']['value']
-            cluster_method = actual_children[3]['props']['value']
-            nn = actual_children[5]['props']['value']
+            cluster_method = actual_children[4]['props']['value']
+            nn = actual_children[6]['props']['value']
 
-            ang1 = actual_children[6]['props']['children'][0]['props']['value']
-            ang2 = actual_children[6]['props']['children'][1]['props']['value']
-            ang3 = actual_children[6]['props']['children'][2]['props']['value']
+            ang1 = actual_children[7]['props']['children'][0]['props']['value']
+            ang2 = actual_children[7]['props']['children'][1]['props']['value']
+            ang3 = actual_children[7]['props']['children'][2]['props']['value']
 
-            r1 = actual_children[7]['props']['children'][0]['props']['value']
-            r2 = actual_children[7]['props']['children'][1]['props']['value']
-            r3 = actual_children[7]['props']['children'][2]['props']['value']
+            r1 = actual_children[8]['props']['children'][0]['props']['value']
+            r2 = actual_children[8]['props']['children'][1]['props']['value']
+            r3 = actual_children[8]['props']['children'][2]['props']['value']
 
             accl = sp.ACCluster(X, locations, nclus=nclus, acmetric=acmetric, cluster_method=cluster_method, nnears=nn, searchparams=(ang1, ang2, ang3, r1, r2, r3))
             accl.fit(nclus) 
